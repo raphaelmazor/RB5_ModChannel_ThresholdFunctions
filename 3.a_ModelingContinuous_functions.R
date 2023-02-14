@@ -3,9 +3,9 @@ library(ggplot2)
 
 
 #Load required datasets
-obs_points_df<-read_csv("continuous_model_data/obs_points_df.csv") %>%
+obs_points_df<-read_csv("Data/continuous_model_data/obs_points_df.csv") %>%
   mutate(BSPretty=factor(BSPretty, levels=c("Total N", "Total P", "Chl-a","AFDM", "% cover")))
-my.models.predictions<-read_csv("continuous_model_data/my.models.predictions.csv") %>%
+my.models.predictions<-read_csv("Data/continuous_model_data/my.models.predictions.csv") %>%
   mutate(BSPretty=factor(BSPretty, levels=c("Total N", "Total P", "Chl-a","AFDM", "% cover")))
 
 
