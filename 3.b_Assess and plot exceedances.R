@@ -44,14 +44,14 @@ obs_df<- tibble(
 #####Input Classes#####
 #Get relevant classes from user
 applicable_classes<-c("Wadeable streams", #Always
-                      "RFI-N", #optional
-                      "CVF") #optional
+                      "CVF", #optional
+                      "SB0") #optional
 
 applicable_classes %in% thresh_df$Class
 
 #####Input Stringency#####
 #Get stringency from user
-stringency_user<-c("High")
+stringency_user<-c("Intermediate")
 
 
 
