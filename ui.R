@@ -4,6 +4,7 @@ ui <- fluidPage(
   fluidRow(
     column(
       2,
+      align = "right",
       shinyWidgets::pickerInput(
         "Class_fullname", 
         label = "Class", 
@@ -22,16 +23,18 @@ ui <- fluidPage(
         "Indicator",
         label = "Indicator", 
         choices = indicator_choices,
-        selected = indicator_choices |> dplyr::first(),
+        selected = indicator_choices,
         multiple = TRUE,
         options = list(
           `actions-box` = TRUE)
       ),
-      DT::dataTableOutput("user_input_table")
+      DT::dataTableOutput("user_input_table"),
+      actionButton("submit", "Submit")
     ),
     column(
       10,
-      plotOutput("assessment_plot"),
+      align = "center",
+      plotOutput("assessment_plot", width = "6.5in", height = "7.5in"),
       DT::dataTableOutput("threshold_table")
     )
   )

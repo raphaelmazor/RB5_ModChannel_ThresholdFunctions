@@ -22,8 +22,8 @@ server <- function(input, output, session) {
                                T ~ "OTHER"
         ),
         Approach4 = factor(Approach4, 
-                           levels = Approach4 %>%
-                             unique() %>%
+                           levels = Approach4 |>
+                             unique() |>
                              rev())
       ) |>
       dplyr::arrange(
@@ -53,7 +53,11 @@ server <- function(input, output, session) {
         Indicator_Type == "Biostimulatory" & Threshold_value >= Observed_value & !is.na(Flag) ~ "Passes flagged",
         
         T~"Other"),
-        Threshold_pass = as.factor(Threshold_pass),
+        Threshold_pass = factor(Threshold_pass,
+                                levels=c("Passes","Passes flagged",
+                                         "Fails","Fails but flagged",
+                                         "No threshold identified",
+                                         "No data")),
         obs_label = paste0(Indicator,"\n(",Observed_value,")")
       )
   })
@@ -78,13 +82,13 @@ server <- function(input, output, session) {
                                             cowplot::get_legend(assessment_plot),
                                             nrow=2, rel_heights=c(1,.2))
     assessment_plot_cow
-  }) 
+  }) |>
+    bindEvent(input$submit)
     
   
   v <- reactiveValues(data = {
     data.frame(Indicator = indicator_choices,
                Observed_value = c(NA_real_, 9.2, 0.97, 1.02, 0.39, 13.26, 0.79, 1.03))
-    
   })
   
   output$user_input_table <- DT::renderDataTable({
