@@ -1,31 +1,38 @@
 ui <- fluidPage(
+  title = "Threshold Identification for Modified Channels and Other Stream Types",
+  titlePanel("Threshold Identification for Modified Channels and Other Stream Types"),
   fluidRow(
     column(
       2,
-      selectInput(
+      shinyWidgets::pickerInput(
         "Class_fullname", 
         label = "Class", 
         choices = class_choices,
-        multiple = TRUE
+        multiple = TRUE,
+        options = list(
+          `actions-box` = TRUE)
       ),
-      selectInput(
+      shinyWidgets::pickerInput(
         "Stringency",
         label = "Stringency", 
         choices = stringency_choices,
-        selected = stringency_choices |> dplyr::first(),
-        multiple = TRUE
+        selected = stringency_choices |> dplyr::first()
       ),
-      selectInput(
+      shinyWidgets::pickerInput(
         "Indicator",
         label = "Indicator", 
         choices = indicator_choices,
         selected = indicator_choices |> dplyr::first(),
-        multiple = TRUE
-      )
+        multiple = TRUE,
+        options = list(
+          `actions-box` = TRUE)
+      ),
+      DT::dataTableOutput("user_input_table")
     ),
     column(
       10,
-      dataTableOutput("threshold_table")
+      plotOutput("assessment_plot"),
+      DT::dataTableOutput("threshold_table")
     )
   )
 )
