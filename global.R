@@ -11,7 +11,5 @@ stringency_choices <- threshold_static |>
   dplyr::arrange(desc(Stringency)) |>
   dplyr::pull()
 
-indicator_choices <- threshold_static |> 
-  dplyr::distinct(Indicator) |> 
-  dplyr::arrange(Indicator) |>
-  dplyr::pull()
+indicator_choices <- c("ASCI_D", "ASCI_H", "CSCI", "TN", "TP", "Chl-a", "AFDM", "% cover")
+
