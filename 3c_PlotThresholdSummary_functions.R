@@ -41,11 +41,11 @@ synthesize_thresholds_plot<-function(
   ggplot(data=thresholds_plotdata[[1]], 
          aes(x=Class, y=Threshold_value))+
     # geom_point(aes(color=Approach), position=position_jitter(height=0, width=.1))+
-    stat_summary( fun.y="mean", shape=8, size=1)+
+    
     geom_point(aes(fill=Approach, shape=Index, 
                    size=Flagged),
                position=position_dodge(width=.5))+
-    
+    stat_summary(data=. %>% filter(!Flagged), fun.y="mean", shape=8, size=.5)+
     geom_hline(data=thresholds_plotdata[[2]], aes(yintercept=Threshold_mean), linetype="dashed")+
     # stat_summary( fun.y="mean", shape=10)+
     facet_wrap(~Indicator, scales="free")+
