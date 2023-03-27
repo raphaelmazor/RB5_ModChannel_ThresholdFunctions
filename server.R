@@ -33,12 +33,12 @@ server <- function(input, output, session) {
         Response_model_index
       )
   }) |>
-    bindEvent(input$Class_fullname, input$Stringency, input$Indicator)
+    bindEvent(input$Class_fullname, input$Stringency, input$Indicator, input$submit)
     
     
   my_thresh_df <- reactive({
     threshold_data() |>
-      dplyr::inner_join(v$data) |>
+      dplyr::inner_join(obs_table$data) |>
       dplyr::mutate(Threshold_pass = dplyr::case_when(
         is.na(Observed_value)~"No data",
         is.na(Threshold_value)~"No threshold identified",
@@ -63,7 +63,7 @@ server <- function(input, output, session) {
   })
   
 
-  output$assessment_plot <- renderPlot({
+  assessment_plot <- reactive({
     assessment_plot <- ggplot(data=my_thresh_df(), aes(x=obs_label, y=Approach4)) +
       geom_tile(aes(fill=Threshold_pass), color="white") +
       geom_text(aes(label=Threshold_value))+
@@ -77,38 +77,72 @@ server <- function(input, output, session) {
             panel.border = element_blank(),
             axis.title.x = element_text(color="gray25"))
     
+    
     assessment_plot_cow <- cowplot::plot_grid(assessment_plot +
-                                              theme(legend.position = "none"),
-                                            cowplot::get_legend(assessment_plot),
-                                            nrow=2, rel_heights=c(1,.2))
+                                                theme(legend.position = "none"),
+                                              cowplot::get_legend(assessment_plot),
+                                              nrow=2, rel_heights=c(1,.2))
     assessment_plot_cow
+  })
+  
+  output$assessment_plot <- renderPlot({
+    assessment_plot()
   }) |>
-    bindEvent(input$submit)
+    bindEvent(input$submit, input$clear)
     
   
-  v <- reactiveValues(data = {
-    data.frame(Indicator = indicator_choices,
-               Observed_value = c(NA_real_, 9.2, 0.97, 1.02, 0.39, 13.26, 0.79, 1.03))
+  obs_table <- reactiveValues(data = {
+    threshold_static |>
+      dplyr::distinct(Indicator_Type, Indicator) |>
+      dplyr::arrange(Indicator_Type, match(Indicator, indicator_choices)) |>
+      dplyr::mutate(
+        Units = dplyr::case_when(
+          Indicator == "ASCI_D" ~ "None",
+          Indicator == "ASCI_H" ~ "None",
+          Indicator == "CSCI" ~ "None",
+          Indicator == "TN" ~ "mg/L",
+          Indicator == "TP" ~ "mg/L",
+          Indicator == "Chl-a" ~ "mg/m²",
+          Indicator == "AFDM" ~ "g/m²",
+          Indicator == "% cover" ~ "%"
+        ),
+        Observed_value = NA_real_
+      )
   })
-  
+    
+
   output$user_input_table <- DT::renderDataTable({
-    DT::datatable(v$data, editable = TRUE, options = list(dom = 't'), selection = 'none')
-  })
+    obs_table$data |>
+      dplyr::mutate(
+        Indicator = dplyr::case_when(
+          Indicator == "ASCI_D" ~ "Algal Stream Condition Index for diatoms (ASCI_D)",
+          Indicator == "ASCI_H" ~ "Algal Stream Condition Index for diatoms and soft-bodied algal taxa (ASCI_H)",
+          Indicator == "CSCI" ~ "California Stream Condition Index for benthic macroinvertebrates (CSCI)",
+          Indicator == "TN" ~ "Total nitrogen (TN)",
+          Indicator == "TP" ~ "Total phosphorous (TP)",
+          Indicator == "Chl-a" ~ "Benthic chlorophyll-a (Chl-a)",
+          Indicator == "AFDM" ~ "Benthic Ash-Free Dry Mass (AFDM)",
+          Indicator == "% cover" ~ "Percent algal cover on the streambed (% cover)"
+        )
+      )
+  }, editable = list(target = "cell", disable = list(columns = c(1, 2, 3))), options = list(dom = 't'), selection = 'none') |>
+    bindEvent(obs_table$data)
   
   
   observe({
-    info <- input$user_input_table_cell_edit
-    i <- as.numeric(info$row)
-    j <- as.numeric(info$col)
-    k <- as.numeric(info$value)
-    
-    v$data[i, j] <- k
+    obs_table$data <<- DT::editData(obs_table$data, input$user_input_table_cell_edit)
   }) |>
     bindEvent(input$user_input_table_cell_edit)
+  
+  observe({
+    obs_table$data$Observed_value <- NA_real_
+  }) |>
+    bindEvent(input$clear)
   
   output$threshold_table <- DT::renderDataTable({
     threshold_data() |>
       dplyr::select(
+        Class,
         Class_fullname, 
         Stringency,
         Approach,
@@ -119,5 +153,35 @@ server <- function(input, output, session) {
         Flag
       )
   })
+  
+  output$download_table <- downloadHandler(
+    filename = function() {
+      paste0("Threshold-Table-", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      data = threshold_data() |>
+        dplyr::select(
+          Class,
+          Class_fullname, 
+          Stringency,
+          Approach,
+          Response_model_detail,
+          Indicator_Type,
+          Indicator,
+          Threshold_value,
+          Flag
+        )
+      write.csv(data, file, row.names = FALSE)
+    }
+  )
+  
+  output$download_graphic <- downloadHandler(
+    filename = function() {
+      paste0("Threshold-Graphic-", Sys.Date(), ".png")
+    },
+    content = function(file) {
+      cowplot::save_plot(file, plot = assessment_plot() + theme(plot.background = element_rect(fill = "white", color = NA)), base_height = 7.5, base_width = 6.5)
+    }
+  )
   
 }
