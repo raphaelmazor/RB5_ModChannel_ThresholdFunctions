@@ -78,7 +78,43 @@ ggplot(data=plot_dat,
   guides(fill=guide_legend(override.aes = list(shape=21, size=2)),
          shape=guide_legend(override.aes = list(fill="gray", size=2)))
   
+#####
+#Threshold plot function
 
+get_thresholds<-function(classes, stringency, indicators=c("CSCI", "ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM","% cover")) {
+  #Get desired classes
+  classes.i<-c("Wadeable streams", "RFI-N","RFI-S", "CVF", "HB","SB2","SB1","SB0","CC")
+  # c("Wadeable streams", "RFI-N","RFI-S", "CVF", "HB","SB2","SB1","SB0","CC")
+  #Get desired stringency
+  stringency.i<-c("Intermediate")
+  # c("High", "Intermediate", "Low")
+  #Get desired indicators
+  indicators.i<-c( "CSCI", "ASCI_D","ASCI_H",
+                   "TN","TP", "Chl-a","AFDM","% cover")
+  
+  #Filter data
+  myplotdat<-thresholds_df %>%
+    filter(Class %in% classes.i) %>%
+    filter(Stringency==stringency.i) %>%
+    filter(Indicator %in% indicators.i) %>%
+    mutate(Flagged = !is.na(Flag))
+  
+  #Get mean threshold
+  
+  myplotdat_sum<-myplotdat %>%
+    filter(!Flagged) %>%
+    group_by(Indicator) %>%
+    summarise(Threshold_mean= mean(Threshold_value))
+  thresholds_output<-list(myplotdat, myplotdat_sum)
+  thresholds_output
+}
+
+get_thresholds(classes=c("Wadeable streams", "HB","CVF"))
+
+plot_thresholds<-function(classes, stringency, indicators=c("CSCI", "ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM","% cover")) {
+  thresholds_output= get_thresholds()
+  }
+#####
 
 
 
@@ -103,3 +139,6 @@ lapply(1:nrow(threshold_summary_df), function(i){
   # classes<-ifelse(geog.i %in% c("SoCal") & flow.i=="Intermittent", c(classes, "RFI-S"), classes)
   classes %>% unique()
 })
+
+####################
+
