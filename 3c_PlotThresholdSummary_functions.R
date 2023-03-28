@@ -100,7 +100,7 @@ synthesize_thresholds_obs_plot<-function(
     tally() %>%
     ungroup()%>%
     filter(n>1) 
-  print(multiple_thresholds)
+
   ydf<-thresholds_plotdata[[1]] %>%
     mutate(ClassIndicator = paste0(Class, Indicator))
   ggplot(data=ydf, 
@@ -116,11 +116,11 @@ synthesize_thresholds_obs_plot<-function(
     # geom_hline(data=obs_data, aes(yintercept=Observed_value, color="Observed value"), linetype="dashed", size=.75)+scale_color_manual(values=c("violet"), name="")+
     # geom_hline(data=thresholds_plotdata[[2]], aes(yintercept=Threshold_mean), linetype="solid")+
     geom_hline(data=xdf, aes(yintercept=Value, color=DataType))+
-    scale_color_manual(values=c("black","violet"), name="")+
+    scale_color_manual(values=c("black","violet"), name="", labels=c("Mean of unflagged thresholds\n(Within or across classes)","Observed value"))+
     facet_wrap(~Indicator, scales="free", ncol=2)+
     scale_shape_manual(values=c(24,25,22, 21), name="Response model index")+
     scale_fill_manual(values=c("#e41a1c","#377eb8","#33a02c","#b2df8a"), name="Approach")+
-    scale_size_manual(values=c(2,1), name="Flagged?", labels=c("No","Yes (excluded from means)"))+
+    scale_size_manual(values=c(2,1), name="Flagged?", labels=c("No","Yes"))+
     theme_bw()+
     coord_flip()+
     guides(shape=guide_legend(override.aes = list(fill="gray", size=2), order=2),
