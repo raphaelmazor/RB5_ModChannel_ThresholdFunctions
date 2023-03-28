@@ -4,7 +4,9 @@ library(ggplot2)
 #Load and prep required data
 thresholds_df<-read_csv("Data/mod_channel_thresholds.csv") %>%
   mutate(Indicator = factor(Indicator, levels = unique(Indicator)),
-         Flagged = !is.na(Flag))
+         Flagged = !is.na(Flag),
+         Approach4 = case_when(Approach=="Response"~paste0("Response (",Response_model_form,")"),
+                               T~Approach))
 
 
 #Get user info
@@ -12,7 +14,7 @@ thresholds_df<-read_csv("Data/mod_channel_thresholds.csv") %>%
 #Get thresholds
 synthesize_thresholds_plotdata<-function(
     classes,
-    indicators = c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM","Chl-a"),
+    indicators = c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM","% cover"),
     stringency="Intermediate") {
   
   
@@ -34,7 +36,7 @@ synthesize_thresholds_plotdata<-function(
 
 synthesize_thresholds_plot<-function(
     classes,
-    indicators = c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM","Chl-a"),
+    indicators = c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM","% cover"),
     stringency="Intermediate") {
   
   thresholds_plotdata <- synthesize_thresholds_plotdata(classes=classes, indicators=indicators, stringency = stringency)
@@ -42,21 +44,100 @@ synthesize_thresholds_plot<-function(
          aes(x=Class, y=Threshold_value))+
     # geom_point(aes(color=Approach), position=position_jitter(height=0, width=.1))+
     
-    geom_point(aes(fill=Approach, shape=Index, 
+    geom_point(aes(fill=Approach4, shape=Index, 
                    size=Flagged),
                position=position_dodge(width=.5))+
-    stat_summary(data=. %>% filter(!Flagged), fun.y="mean", shape=8, size=.5)+
-    geom_hline(data=thresholds_plotdata[[2]], aes(yintercept=Threshold_mean), linetype="dashed")+
+    # stat_summary(data=. %>% filter(!Flagged), fun.y="mean", shape=8, size=.5)+
+    stat_summary(data=. %>% filter(!Flagged), fun.y="mean", geom="crossbar", size=.25)+
+    geom_hline(data=thresholds_plotdata[[2]], aes(yintercept=Threshold_mean), linetype="dashed", size=.5)+
     # stat_summary( fun.y="mean", shape=10)+
-    facet_wrap(~Indicator, scales="free")+
-    scale_shape_manual(values=c(24,25,22, 21))+
-    scale_fill_brewer(palette="Set1")+
-    scale_size_manual(values=c(2,1), name="Flagged?", labels=c("No","Yes"))+
+    facet_wrap(~Indicator, scales="free", ncol=2)+
+    scale_shape_manual(values=c(24,25,22, 21), name="Response model index")+
+    scale_fill_manual(values=c("#e41a1c","#377eb8","#33a02c","#b2df8a"), name="Approach")+
+    scale_size_manual(values=c(2,1), name="Flagged?", labels=c("No","Yes (excluded from means)"))+
     theme_bw()+
     coord_flip()+
-    guides(fill=guide_legend(override.aes = list(shape=21, size=2)),
-           shape=guide_legend(override.aes = list(fill="gray", size=2)))+
+    guides(shape=guide_legend(override.aes = list(fill="gray", size=2), order=2),
+           fill=guide_legend(override.aes = list(shape=21, size=2), order=1),
+           size=guide_legend(order=3)
+           )+
+    theme(legend.position = "bottom",
+          legend.direction = "vertical")+
     xlab("")+ylab("")
 }
 
-synthesize_thresholds_plot(classes=c("RFI-N","CVF","HB"))
+# synthesize_thresholds_plot(classes=c("RFI-N","CVF","HB"))
+synthesize_thresholds_plot(classes=c("CVF","SB0"),
+                           indicators = c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM", "% cover"))
+##
+
+synthesize_thresholds_obs_plot<-function(
+    classes,
+    indicators = c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM","% cover"),
+    CSCI=NA_real_,ASCI_D=NA_real_,ASCI_H=NA_real_, TN=NA_real_, TP=NA_real_, Chla=NA_real_, AFDM=NA_real_, Cover=NA_real_,
+    stringency="Intermediate") {
+  
+  obs_data=tibble(
+    Indicator=c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM","% cover"),
+    Observed_value=c(CSCI, ASCI_D, ASCI_H, TN, TP, Chla, AFDM, Cover)
+  ) %>%
+    filter(Indicator %in%  indicators) %>%
+    mutate(Indicator=factor(Indicator, levels=c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM","% cover")))
+  
+  thresholds_plotdata <- synthesize_thresholds_plotdata(classes=classes, indicators=indicators, stringency = stringency) 
+  xdf <- obs_data %>%
+    rename(Value=Observed_value) %>%
+    mutate(DataType="Observed value") %>%
+    bind_rows(
+      thresholds_plotdata[[2]] %>%
+        rename(Value=Threshold_mean) %>%
+        mutate(DataType="Mean of thresholds")
+    )
+  multiple_thresholds<-thresholds_plotdata[[1]] %>%
+    filter(!Flagged) %>%
+    mutate(ClassIndicator = paste0(Class, Indicator)) %>%
+    group_by(ClassIndicator) %>%
+    tally() %>%
+    ungroup()%>%
+    filter(n>1) 
+  print(multiple_thresholds)
+  ydf<-thresholds_plotdata[[1]] %>%
+    mutate(ClassIndicator = paste0(Class, Indicator))
+  ggplot(data=ydf, 
+         aes(x=Class, y=Threshold_value))+
+    # geom_point(aes(color=Approach), position=position_jitter(height=0, width=.1))+
+    
+    geom_point(aes(fill=Approach4, shape=Index, 
+                   size=Flagged),
+               position=position_dodge(width=0))+
+    stat_summary(data=. %>% 
+                   filter(!Flagged) %>%
+                   filter(ClassIndicator %in% multiple_thresholds$ClassIndicator), fun.y="mean", geom="crossbar", size=.25)+
+    # geom_hline(data=obs_data, aes(yintercept=Observed_value, color="Observed value"), linetype="dashed", size=.75)+scale_color_manual(values=c("violet"), name="")+
+    # geom_hline(data=thresholds_plotdata[[2]], aes(yintercept=Threshold_mean), linetype="solid")+
+    geom_hline(data=xdf, aes(yintercept=Value, color=DataType))+
+    scale_color_manual(values=c("black","violet"), name="")+
+    facet_wrap(~Indicator, scales="free", ncol=2)+
+    scale_shape_manual(values=c(24,25,22, 21), name="Response model index")+
+    scale_fill_manual(values=c("#e41a1c","#377eb8","#33a02c","#b2df8a"), name="Approach")+
+    scale_size_manual(values=c(2,1), name="Flagged?", labels=c("No","Yes (excluded from means)"))+
+    theme_bw()+
+    coord_flip()+
+    guides(shape=guide_legend(override.aes = list(fill="gray", size=2), order=2),
+           fill=guide_legend(override.aes = list(shape=21, size=2), order=1),
+           size=guide_legend(order=3),
+           color=guide_legend(order=4)
+    )+
+    theme(legend.position = "bottom",
+          legend.direction = "vertical")+
+    xlab("")+ylab("")
+}
+
+# synthesize_thresholds_plot(classes=c("RFI-N","CVF","HB"))
+synthesize_thresholds_obs_plot(classes=c("CVF","SB0"),
+                           indicators = c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM", "% cover"),
+                           CSCI=0.39, ASCI_D=0.97, ASCI_H=1.02, TN=0.79, TP=1.03, Chla=13.26, AFDM=9.2)
+
+
+
+
