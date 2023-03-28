@@ -60,7 +60,7 @@ synthesize_thresholds_plot<-function(
     guides(shape=guide_legend(override.aes = list(fill="gray", size=2), order=2),
            fill=guide_legend(override.aes = list(shape=21, size=2), order=1),
            size=guide_legend(order=3)
-           )+
+    )+
     theme(legend.position = "bottom",
           legend.direction = "vertical")+
     xlab("")+ylab("")
@@ -100,7 +100,7 @@ synthesize_thresholds_obs_plot<-function(
     tally() %>%
     ungroup()%>%
     filter(n>1) 
-
+  
   ydf<-thresholds_plotdata[[1]] %>%
     mutate(ClassIndicator = paste0(Class, Indicator))
   ggplot(data=ydf, 
@@ -133,11 +133,49 @@ synthesize_thresholds_obs_plot<-function(
     xlab("")+ylab("")
 }
 
-# synthesize_thresholds_plot(classes=c("RFI-N","CVF","HB"))
-synthesize_thresholds_obs_plot(classes=c("CVF","SB0"),
-                           indicators = c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM", "% cover"),
-                           CSCI=0.39, ASCI_D=0.97, ASCI_H=1.02, TN=0.79, TP=1.03, Chla=13.26, AFDM=9.2)
 
+#Elder
+test_plot<-synthesize_thresholds_obs_plot(classes=c("CVF","SB0"),
+                                          indicators = c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM", "% cover"),
+                                          CSCI=0.39, ASCI_D=0.97, ASCI_H=1.02, TN=0.79, TP=1.03, Chla=13.26, AFDM=9.2)
 
+# library(cowplot)
+# cowplot::plot_grid(test_plot +
+#                      theme(legend.position = "none"),
+#                    cowplot::get_legend(test_plot),
+#                    nrow=2, rel_heights=c(1,.25),
+#                    hjust=0)
 
+ggsave(test_plot, filename="Figures/assessment_plot_alt_ELDER.jpg",
+       dpi=300, height=8, width=7.75)
 
+#Magpie
+test_plot<-synthesize_thresholds_obs_plot(classes=c("CVF","HB"),
+                                          indicators = c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM", "% cover"),
+                                          CSCI=0.21, ASCI_D=0.92, ASCI_H=.82, TN=.64, TP=.2, Chla=154, AFDM=83, Cover=41)
+
+# library(cowplot)
+# cowplot::plot_grid(test_plot +
+#                      theme(legend.position = "none"),
+#                    cowplot::get_legend(test_plot),
+#                    nrow=2, rel_heights=c(1,.25),
+#                    hjust=0)
+
+ggsave(test_plot, filename="Figures/assessment_plot_alt_MAGPIE.jpg",
+       dpi=300, height=8, width=7.75)
+
+#Pine
+test_plot<-synthesize_thresholds_obs_plot(classes=c("CVF","RFI-N"),
+                                          indicators = c("CSCI","ASCI_D","ASCI_H","TN","TP","Chl-a","AFDM", "% cover"),
+                                          CSCI=0.83, ASCI_D=0.9, ASCI_H=.94, TN=.07, TP=.013, Chla=33.3, AFDM=11, 
+                                          stringency = "High")
+
+# library(cowplot)
+# cowplot::plot_grid(test_plot +
+#                      theme(legend.position = "none"),
+#                    cowplot::get_legend(test_plot),
+#                    nrow=2, rel_heights=c(1,.25),
+#                    hjust=0)
+
+ggsave(test_plot, filename="Figures/assessment_plot_alt_PINE.jpg",
+       dpi=300, height=8, width=7.75)
