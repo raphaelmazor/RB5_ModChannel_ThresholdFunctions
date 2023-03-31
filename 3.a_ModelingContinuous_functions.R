@@ -45,7 +45,8 @@ FindThresholds <-function(goal,
            IndexScore_predicted_u95=IndexScore_predicted+IndexScore_predicted_se*1.96,)
   xdf
 }
-FindThresholds_plot(goal=0.75, index=c("CSCI"), stressor="PCT_MAP")
+FindThresholds_plot(goal=.86, index=c("ASCI_D"), stressor="Nitrogen_Total_mgPerL")+
+  ggtitle("Response model thresholds")
 # FindThresholds(goal=0.75)
 # FindThresholds(goal=c(.65,.6))
 
